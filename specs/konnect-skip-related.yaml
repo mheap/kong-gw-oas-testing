@@ -213,6 +213,85 @@ components:
               type: string
           type: object
         - $ref: '#/components/schemas/CreateAPIKey'
+    BaseService:
+      description: Service entities, as the name implies, are abstractions of each of your own upstream services. Examples of Services would be a data transformation microservice, a billing API, etc. The main attribute of a Service is its URL (where Kong should proxy traffic to), which can be set as a single string or by specifying its `protocol`, `host`, `port` and `path` individually. Services are associated to Routes (a Service can have many Routes associated with it). Routes are entry-points in Kong and define rules to match client requests. Once a Route is matched, Kong proxies the request to its associated Service. See the [Proxy Reference][proxy-reference] for a detailed explanation of how Kong proxies traffic.
+      properties:
+        ca_certificates:
+          description: Array of `CA Certificate` object UUIDs that are used to build the trust store while verifying upstream server's TLS certificate. If set to `null` when Nginx default is respected. If default CA list in Nginx are not specified and TLS verification is enabled, then handshake with upstream server will always fail (because no CA are trusted).
+          items:
+            type: string
+          type: array
+        client_certificate:
+          additionalProperties: false
+          description: Certificate to be used as client certificate while TLS handshaking to the upstream server.
+          properties:
+            id:
+              type: string
+          type: object
+        connect_timeout:
+          default: 60000
+          description: The timeout in milliseconds for establishing a connection to the upstream server.
+          type: integer
+        enabled:
+          default: true
+          description: 'Whether the Service is active. If set to `false`, the proxy behavior will be as if any routes attached to it do not exist (404). Default: `true`.'
+          type: boolean
+        host:
+          description: The host of the upstream server. Note that the host value is case sensitive.
+          type: string
+        name:
+          description: The Service name.
+          type: string
+        path:
+          description: The path to be used in requests to the upstream server.
+          type: string
+        port:
+          default: 80
+          description: The upstream server port.
+          type: integer
+        protocol:
+          default: http
+          description: The protocol used to communicate with the upstream.
+          enum:
+            - grpc
+            - grpcs
+            - http
+            - https
+            - tcp
+            - tls
+            - tls_passthrough
+            - udp
+            - ws
+            - wss
+          type: string
+        read_timeout:
+          default: 60000
+          description: The timeout in milliseconds between two successive read operations for transmitting a request to the upstream server.
+          type: integer
+        retries:
+          default: 5
+          description: The number of retries to execute upon failure to proxy.
+          type: integer
+        tags:
+          description: An optional set of strings associated with the Service for grouping and filtering.
+          items:
+            type: string
+          type: array
+        tls_verify:
+          description: Whether to enable verification of upstream server TLS certificate. If set to `null`, then the Nginx default is respected.
+          type: boolean
+        tls_verify_depth:
+          description: Maximum depth of chain while verifying Upstream server's TLS certificate. If set to `null`, then the Nginx default is respected.
+          type: integer
+        write_timeout:
+          default: 60000
+          description: The timeout in milliseconds between two successive write operations for transmitting a request to the upstream server.
+          type: integer
+      required:
+        - protocol
+        - host
+        - port
+      type: object
     BasicAuth:
       allOf:
         - example:
@@ -400,6 +479,15 @@ components:
       properties:
         algorithm:
           default: HS256
+          enum:
+            - HS256
+            - HS384
+            - HS512
+            - RS256
+            - RS384
+            - RS512
+            - ES256
+            - ES384
           type: string
         consumer:
           additionalProperties: false
@@ -481,6 +569,7 @@ components:
           description: The name of the Plugin that's going to be added. Currently, the Plugin must be installed in every Kong instance separately.
           type: string
         ordering:
+          additionalProperties: true
           type: object
         protocols:
           default:
@@ -490,6 +579,17 @@ components:
             - https
           description: A list of the request protocols that will trigger this plugin. The default value, as well as the possible values allowed on this field, may change depending on the plugin type. For example, plugins that only work in stream mode will only support `"tcp"` and `"tls"`.
           items:
+            enum:
+              - grpc
+              - grpcs
+              - http
+              - https
+              - tcp
+              - tls
+              - tls_passthrough
+              - udp
+              - ws
+              - wss
             type: string
           type: array
         route:
@@ -517,12 +617,9 @@ components:
       properties:
         destinations:
           description: A list of IP destinations of incoming connections that match this Route when using stream routing. Each entry is an object with fields "ip" (optionally in CIDR range notation) and/or "port".
-          items:
-            properties:
-              "": {}
-            type: object
           type: array
         headers:
+          additionalProperties: true
           description: 'One or more lists of values indexed by header name that will cause this Route to match if present in the request. The `Host` header cannot be used with this attribute: hosts should be specified using the `hosts` attribute. When `headers` contains only one value and that value starts with the special prefix `~*`, the value is interpreted as a regular expression.'
           type: object
         hosts:
@@ -533,11 +630,15 @@ components:
         https_redirect_status_code:
           default: 426
           description: 'The status code Kong responds with when all properties of a Route match except the protocol i.e. if the protocol of the request is `HTTP` instead of `HTTPS`. `Location` header is injected by Kong if the field is set to 301, 302, 307 or 308. Note: This config applies only if the Route is configured to only accept the `https` protocol.'
+          enum:
+            - 426
+            - 301
+            - 302
+            - 307
+            - 308
           type: integer
         methods:
           description: A list of HTTP methods that match this Route.
-          items:
-            type: string
           type: array
         name:
           description: The name of the Route. Route names must be unique, and they are case sensitive. For example, there can be two different Routes named "test" and "Test".
@@ -545,6 +646,9 @@ components:
         path_handling:
           default: v0
           description: Controls how the Service path, Route path and requested path are combined when sending a request to the upstream. See above for a detailed description of each behavior.
+          enum:
+            - v0
+            - v1
           type: string
         paths:
           description: A list of paths that match this Route.
@@ -561,6 +665,17 @@ components:
             - https
           description: An array of the protocols this Route should allow. See the [Route Object](#route-object) section for a list of accepted protocols. When set to only `"https"`, HTTP requests are answered with an upgrade error. When set to only `"http"`, HTTPS requests are answered with an error.
           items:
+            enum:
+              - grpc
+              - grpcs
+              - http
+              - https
+              - tcp
+              - tls
+              - tls_passthrough
+              - udp
+              - ws
+              - wss
             type: string
           type: array
         regex_priority:
@@ -584,15 +699,9 @@ components:
           type: object
         snis:
           description: A list of SNIs that match this Route when using stream routing.
-          items:
-            type: string
           type: array
         sources:
           description: A list of IP sources of incoming connections that match this Route when using stream routing. Each entry is an object with fields "ip" (optionally in CIDR range notation) and/or "port".
-          items:
-            properties:
-              "": {}
-            type: object
           type: array
         strip_path:
           default: true
@@ -624,87 +733,13 @@ components:
           type: array
       type: object
     CreateService:
-      description: Service entities, as the name implies, are abstractions of each of your own upstream services. Examples of Services would be a data transformation microservice, a billing API, etc. The main attribute of a Service is its URL (where Kong should proxy traffic to), which can be set as a single string or by specifying its `protocol`, `host`, `port` and `path` individually. Services are associated to Routes (a Service can have many Routes associated with it). Routes are entry-points in Kong and define rules to match client requests. Once a Route is matched, Kong proxies the request to its associated Service. See the [Proxy Reference][proxy-reference] for a detailed explanation of how Kong proxies traffic.
-      properties:
-        ca_certificates:
-          description: Array of `CA Certificate` object UUIDs that are used to build the trust store while verifying upstream server's TLS certificate. If set to `null` when Nginx default is respected. If default CA list in Nginx are not specified and TLS verification is enabled, then handshake with upstream server will always fail (because no CA are trusted).
-          items:
-            type: string
-          type: array
-        client_certificate:
-          additionalProperties: false
-          description: Certificate to be used as client certificate while TLS handshaking to the upstream server.
-          properties:
-            id:
+      allOf:
+        - properties:
+            url:
+              description: Helper field to set `protocol`, `host`, `port` and `path` using a URL. This field is write-only and is not returned in responses.
               type: string
           type: object
-        connect_timeout:
-          default: 60000
-          description: The timeout in milliseconds for establishing a connection to the upstream server.
-          type: integer
-        enabled:
-          default: true
-          description: 'Whether the Service is active. If set to `false`, the proxy behavior will be as if any routes attached to it do not exist (404). Default: `true`.'
-          type: boolean
-        host:
-          description: The host of the upstream server. Note that the host value is case sensitive.
-          type: string
-        name:
-          description: The Service name.
-          type: string
-        path:
-          description: The path to be used in requests to the upstream server.
-          type: string
-        port:
-          default: 80
-          description: The upstream server port.
-          type: integer
-        protocol:
-          default: http
-          description: The protocol used to communicate with the upstream.
-          enum:
-            - http
-            - https
-            - tcp
-            - udp
-            - tls
-            - tls_passthrough
-            - grpc
-            - grpcs
-            - ws
-            - wss
-          type: string
-        read_timeout:
-          default: 60000
-          description: The timeout in milliseconds between two successive read operations for transmitting a request to the upstream server.
-          type: integer
-        retries:
-          default: 5
-          description: The number of retries to execute upon failure to proxy.
-          type: integer
-        tags:
-          description: An optional set of strings associated with the Service for grouping and filtering.
-          items:
-            type: string
-          type: array
-        tls_verify:
-          description: Whether to enable verification of upstream server TLS certificate. If set to `null`, then the Nginx default is respected.
-          type: boolean
-        tls_verify_depth:
-          description: Maximum depth of chain while verifying Upstream server's TLS certificate. If set to `null`, then the Nginx default is respected.
-          type: integer
-        url:
-          description: Helper field to set `protocol`, `host`, `port` and `path` using a URL. This field is write-only and is not returned in responses.
-          type: string
-        write_timeout:
-          default: 60000
-          description: The timeout in milliseconds between two successive write operations for transmitting a request to the upstream server.
-          type: integer
-      required:
-        - protocol
-        - host
-        - port
-      type: object
+        - $ref: '#/components/schemas/BaseService'
     CreateTarget:
       description: A target is an ip address/hostname with a port that identifies an instance of a backend service. Every upstream can have many targets, and the targets can be dynamically added, modified, or deleted. Changes take effect on the fly. To disable a target, post a new one with `weight=0`; alternatively, use the `DELETE` convenience method to accomplish the same. The current target object definition is the one with the latest `created_at`.
       properties:
@@ -733,6 +768,10 @@ components:
         algorithm:
           default: round-robin
           description: Which load balancing algorithm to use.
+          enum:
+            - consistent-hashing
+            - least-connections
+            - round-robin
           type: string
         client_certificate:
           additionalProperties: false
@@ -744,6 +783,15 @@ components:
         hash_fallback:
           default: none
           description: What to use as hashing input if the primary `hash_on` does not return a hash (eg. header is missing, or no Consumer identified). Not available if `hash_on` is set to `cookie`.
+          enum:
+            - none
+            - consumer
+            - ip
+            - header
+            - cookie
+            - path
+            - query_arg
+            - uri_capture
           type: string
         hash_fallback_header:
           description: The header name to take the value from as hash input. Only required when `hash_fallback` is set to `header`.
@@ -757,6 +805,15 @@ components:
         hash_on:
           default: none
           description: What to use as hashing input. Using `none` results in a weighted-round-robin scheme with no hashing.
+          enum:
+            - none
+            - consumer
+            - ip
+            - header
+            - cookie
+            - path
+            - query_arg
+            - uri_capture
           type: string
         hash_on_cookie:
           description: The cookie name to take the value from as hash input. Only required when `hash_on` or `hash_fallback` is set to `cookie`. If the specified cookie is not in the request, Kong will generate a value and set the cookie in the response.
@@ -782,6 +839,7 @@ components:
                   default: 10
                   type: integer
                 headers:
+                  additionalProperties: true
                   type: object
                 healthy:
                   properties:
@@ -812,6 +870,12 @@ components:
                   type: number
                 type:
                   default: http
+                  enum:
+                    - tcp
+                    - http
+                    - https
+                    - grpc
+                    - grpcs
                   type: string
                 unhealthy:
                   properties:
@@ -876,6 +940,12 @@ components:
                   type: object
                 type:
                   default: http
+                  enum:
+                    - tcp
+                    - http
+                    - https
+                    - grpc
+                    - grpcs
                   type: string
                 unhealthy:
                   properties:
@@ -1105,8 +1175,22 @@ components:
             updated_at:
               description: Unix epoch when the resource was last updated.
               type: integer
+          required:
+            - connect_timeout
+            - created_at
+            - enabled
+            - host
+            - id
+            - name
+            - path
+            - port
+            - protocol
+            - read_timeout
+            - retries
+            - updated_at
+            - write_timeout
           type: object
-        - $ref: '#/components/schemas/CreateService'
+        - $ref: '#/components/schemas/BaseService'
     Target:
       allOf:
         - example:
@@ -1233,6 +1317,15 @@ components:
               type: integer
           type: object
         - $ref: '#/components/schemas/CreateVault'
+  securitySchemes:
+    konnectAccessToken:
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+      scheme: bearer
+      type: http
+    personalAccessToken:
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+      scheme: bearer
+      type: http
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://docs.konghq.com
@@ -2697,6 +2790,19 @@ paths:
       tags:
         - Services
   /control-planes/{controlPlaneId}/core-entities/services/{ServiceId}:
+    delete:
+      description: Delete a Service
+      operationId: delete-service
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      responses:
+        "204":
+          description: Successfully deleted Service or the resource didn't exist
+        "401":
+          $ref: '#/components/responses/HTTP401Error'
+      summary: Delete a Service
+      tags:
+        - Services
     get:
       description: Get a Service using ID or name.
       operationId: get-service
@@ -3111,6 +3217,9 @@ paths:
       summary: Upsert a Vault
       tags:
         - Vaults
+security:
+  - konnectAccessToken: []
+  - personalAccessToken: []
 servers:
   - description: Default Admin API URL
     url: '{protocol}://{hostname}:{port}{path}'
