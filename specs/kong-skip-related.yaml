@@ -608,6 +608,13 @@ components:
       properties:
         destinations:
           description: A list of IP destinations of incoming connections that match this Route when using stream routing. Each entry is an object with fields "ip" (optionally in CIDR range notation) and/or "port".
+          items:
+            properties:
+              ip:
+                type: string
+              port:
+                type: integer
+            type: object
           type: array
         headers:
           additionalProperties: true
@@ -693,6 +700,13 @@ components:
           type: array
         sources:
           description: A list of IP sources of incoming connections that match this Route when using stream routing. Each entry is an object with fields "ip" (optionally in CIDR range notation) and/or "port".
+          items:
+            properties:
+              ip:
+                type: string
+              port:
+                type: integer
+            type: object
           type: array
         strip_path:
           default: true
