@@ -1475,18 +1475,18 @@ externalDocs:
   url: https://docs.konghq.com
 info:
   contact:
-    email: harry@konghq.com
+    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
   description: |-
     OpenAPI 3.0 spec for Kong Gateway's Admin API.
 
-    You can know more about Kong Gateway at [docs.konghq.com](https://docs.konghq.com)
+    You can lean more about Kong Gateway at [docs.konghq.com](https://docs.konghq.com)
     .Give Kong a star at [Kong/kong](https://github.com/kong/kong) repository.
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Admin API
+  title: Kong Gateway Admin API
   version: 0.0.1
 openapi: 3.0.0
 paths:
